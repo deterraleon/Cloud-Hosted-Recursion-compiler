@@ -48,9 +48,9 @@ def get_variable(name:str):
         raise Exception(f"No such variable as '{name}'")
     
 
-def save_variable(value, name:str):
+def save_variable(value, name:str, next=0):
     load_dotenv()
-    inner_name = new_hash(name)
+    inner_name = new_hash(name) + next
     con = sqlite3.connect(os.getenv("DB_NAME")) 
     cur = con.cursor()
     program = os.getenv("PROGRAM_NAME")
