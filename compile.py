@@ -17,9 +17,11 @@ def unprocess(func):
     load_dotenv()
     sp = os.getenv("SP")
     sp1 = os.getenv("SP1")
+    sp2 = os.getenv("SP2")
     func = str(func)
     func = func.replace(sp, '"')
     func = func.replace(sp1, "'")
+    func = func.replace(sp2, "\n")
     return func
 
 def parce_functions(text: list[str]):
@@ -117,8 +119,8 @@ def process_function_calls(text:list[str], names):
                     newtext.append(f"{indent}save_variable(get_variable('{inputs[i]}'), '{reqs[i]}', 1)\n")
                 newtext.append(indent + "save_variable(get_variable(os.getenv('RECURSION'))+1, os.getenv('RECURSION'))\n")
                 start = line.find(name)
-                newtext.append(indent + """cur.execute(f'SELECT program FROM {os.getenv("PROGRAM_NAME")}) WHERE name = """ + f"\"{name[:-1]}\"" + "')\n")
-                line = line[:start] + "exec(unprocess(cur.fetchone()))" + line[start + line[start:].find(")")+1:]
+                newtext.append(indent + """cur.execute(f'SELECT program FROM {os.getenv("PROGRAM_NAME")} WHERE name = """ + f"\"{name[:-1]}\"" + "')\n")
+                line = line[:start] + "exec(unprocess(cur.fetchone()[0]))" + line[start + line[start:].find(")")+1:]
         if line.count("return"):
             newtext.append(indent + "save_variable(get_variable(os.getenv('RECURSION'))-1, os.getenv('RECURSION'))\n")
         newtext.append(line)
@@ -133,18 +135,76 @@ def save_function(text:list[str], name):
     beg = 0
     if text[0].count("def") > 0:
         beg = 1
+    step = len(get_indent(text[beg]))
     for line in text[beg:]:
-        newtext += line
+        newtext += line[step:]
     newtext = process(newtext)
-    print(f"INSERT INTO {program} (program, name) VALUES ('{newtext}', '{name[:-1]}')")
     cur.execute(f"INSERT INTO {program} (program, name) VALUES ('{newtext}', '{name[:-1]}')")
     con.commit()
     
-        
+def parce_variable_names_and_definitions(text:list[str]):
+    names = []
+    j = 0
+    for line in text:
+        newname = ""
+        state = -1
+        i = -1
+        for char in line:
+            i += 1
+            if char == '=':
+                names.append(newname)
+                state = 2
+                break
+            if char == ' ':
+                if state == 0:
+                    state = 1
+                continue
+            if state == 1:
+                break
+            else:
+                state = 0
+                newname += char
+            
+        if state == 2:
+            indent = get_indent(text[j])
+            text[j] = indent + f"save_variable({line[i+2:-1]}, '{newname}')\n"
+        j += 1
+    return [text, names]
+
+def parce_variable_usage(text:list[str], names):
+    newtext = []
+    beg = 0
+    if text[0].count("def") > 0:
+        beg = 1
+        newtext = [text[0]]
+    
+    allowed_characters = os.getenv("ALLOWED_CHARACTERS_NEAR_VARIABLE")
+    for line in text[beg:]:
+        newline = ""
+        potenvar = ""
+        if line.count("if") > 0:
+            pass
+        for i in range(len(line)):
+            line[i]
+            if line[i] in allowed_characters or line[i] == "\n":
+                if potenvar in names:
+                    newline += f"get_variable('{potenvar}')"
+                else:
+                    newline += potenvar
+                newline += line[i]
+                potenvar = ""
+            else:
+                potenvar += line[i]
+        if potenvar in names:
+            newline += f"get_variable('{potenvar}')"
+        else:
+            newline += potenvar
+        newtext.append(newline)
+    return newtext
+
 
 
 load_dotenv()
-
 con = sqlite3.connect(os.getenv("DB_NAME")) 
 cur = con.cursor()
 program = os.getenv("PROGRAM_NAME")
@@ -163,9 +223,19 @@ with open("input.py", "r") as input:
     for i in range(len(functions)):
         functions[i] = [functions[i][0], *process_function_calls(functions[i], names)]
     main = process_function_calls(main, names)
+    varnames = []
+    for i in range(len(functions)):
+        functions[i], newvarnames = parce_variable_names_and_definitions(functions[i])
+        varnames += newvarnames 
+    main, newvarnames = parce_variable_names_and_definitions(main)
+    varnames += newvarnames
+    varnames = set(varnames)
+    for i in range(len(functions)):
+        functions[i] = parce_variable_usage(functions[i], varnames)
+    main = parce_variable_usage(main, varnames)
     for i in range(len(functions)):
         save_function(functions[i], names[i])
-    save_function(main, "main(")
+    save_function(main, "main(")   
     with open("output.py", "w") as output:
         for func in functions:
             for line in func:
