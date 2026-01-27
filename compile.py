@@ -85,17 +85,17 @@ def get_indent(line):
             break
     return output
 
-def process_function_calls(text:list[str], names):
+def process_function_calls(text:list[str], names, funcname):
     global functoreq
     beg = 0
     if text[0].count("def") > 0:
         beg = 1
     newtext = []
     for line in text[beg:]:
+        indent = get_indent(line)
         if line.count("[functions[i][0], *process_function_calls(functions[i], names)"):
             pass
         for name in names:
-            indent = get_indent(line)
             if line.count(name) > 0:
                 inputs = [""]
                 write = 0
@@ -120,10 +120,13 @@ def process_function_calls(text:list[str], names):
                 newtext.append(indent + "save_variable(get_variable(os.getenv('RECURSION'))+1, os.getenv('RECURSION'))\n")
                 start = line.find(name)
                 newtext.append(indent + """cur.execute(f'SELECT program FROM {os.getenv("PROGRAM_NAME")} WHERE name = """ + f"\"{name[:-1]}\"" + "')\n")
-                line = line[:start] + "exec(unprocess(cur.fetchone()[0]))" + line[start + line[start:].find(")")+1:]
+                newtext.append(indent + "exec(unprocess(cur.fetchone()[0]))\n")
+                line = line[:start] + f"get_variable('{name[:-1]}')" + line[start + line[start:].find(")")+1:]
         if line.count("return"):
+            newtext.append(indent + f"save_variable({line[line.find("return") + 7:-1]}, '{funcname[:-1]}', -1)\n")
             newtext.append(indent + "save_variable(get_variable(os.getenv('RECURSION'))-1, os.getenv('RECURSION'))\n")
-        newtext.append(line)
+        else:
+            newtext.append(line)
     return newtext
         
 def save_function(text:list[str], name):
@@ -221,8 +224,8 @@ with open("input.py", "r") as input:
     for func in functions:
         names.append(process_function_initial(func))
     for i in range(len(functions)):
-        functions[i] = [functions[i][0], *process_function_calls(functions[i], names)]
-    main = process_function_calls(main, names)
+        functions[i] = [functions[i][0], *process_function_calls(functions[i], names, names[i])]
+    main = process_function_calls(main, names, "main")
     varnames = []
     for i in range(len(functions)):
         functions[i], newvarnames = parce_variable_names_and_definitions(functions[i])

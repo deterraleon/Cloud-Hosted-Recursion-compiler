@@ -34,6 +34,7 @@ def get_variable(name:str):
     cur = con.cursor()
     program = os.getenv("PROGRAM_NAME")
     variables = os.getenv("VARIABLES_NAME")
+    print(f"SELECT value FROM {variables} WHERE name = '{inner_name}'    name={name}")
     cur.execute(f"SELECT value FROM {variables} WHERE name = '{inner_name}'")
     out = cur.fetchall()
     if len(out) > 1:
