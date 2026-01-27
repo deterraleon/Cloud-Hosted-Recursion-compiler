@@ -6,10 +6,12 @@ Ok so there are a lot of things that i need to say here
 
 # MAIN THINGS YOU NEED TO KNOW:
 - Cloud hosted part isn't implemented [add info on how to add it]
+- If you have any questions, open an issue or something idk i'm not experienced with github
 - this thing has a lot of limitations:
     1) any type you want to use has to support str conversion and be able to be evaled
-    2) the parcer i have rn is very bare bones, so with it come the next few limitations
+    2) the parser i have rn is very bare bones, so with it come the next few limitations
     3) 2 functions with the same name aren't supported
     4) there can only be 1 function call per line
     5) there are a bunch of variable names that will already be used by the compiler
+    6) variable definitions can only be of a form {variable name} = {something}
     
