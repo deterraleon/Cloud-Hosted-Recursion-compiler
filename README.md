@@ -5,7 +5,7 @@ This is my first time doing anything even remotely close to this.
 Ok so there are a lot of things that i need to say here
 
 # MAIN THINGS YOU NEED TO KNOW:
-- Cloud hosted part isn't implemented [add info on how to add it]
+- Cloud hosted part isn't implemented, as of now the sql is done locally because i was too lazy to learn how to set up postresql. Support for it is planned in a future update.
 - If you have any questions, open an issue or something idk i'm not experienced with github
 - this thing has a lot of limitations:
     1) any type you want to use has to support str conversion and be able to be evaled
