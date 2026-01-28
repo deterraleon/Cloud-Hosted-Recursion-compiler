@@ -1,5 +1,5 @@
 import os
-import sqlite3
+from sqlite_functions import get_con
 from dotenv import load_dotenv
 
 def process(value)->str:
@@ -30,11 +30,10 @@ def new_hash(name:str):
 def get_variable(name:str):
     load_dotenv()
     inner_name = new_hash(name)
-    con = sqlite3.connect(os.getenv("DB_NAME")) 
+    con = get_con()
     cur = con.cursor()
     program = os.getenv("PROGRAM_NAME")
     variables = os.getenv("VARIABLES_NAME")
-    print(f"SELECT value FROM {variables} WHERE name = '{inner_name}'    name={name}")
     cur.execute(f"SELECT value FROM {variables} WHERE name = '{inner_name}'")
     out = cur.fetchall()
     if len(out) > 1:
@@ -52,22 +51,23 @@ def get_variable(name:str):
 def save_variable(value, name:str, next=0):
     load_dotenv()
     inner_name = new_hash(name) + next
-    con = sqlite3.connect(os.getenv("DB_NAME")) 
+    con = get_con()
     cur = con.cursor()
     program = os.getenv("PROGRAM_NAME")
     variables = os.getenv("VARIABLES_NAME")
+    DEBUG = int(os.getenv("DEBUG"))
     cur.execute(f"SELECT value FROM {variables} WHERE name = '{inner_name}'")
     out = cur.fetchall()
     if len(out) > 1:
         raise Exception(f"2 instances of a variable '{name}'")
     if len(out) == 1:
         out = value
-        print(f"UPDATE {variables} SET value = '{process(out)}' WHERE name = '{inner_name}'    name={name}")
+        if(DEBUG): print(f"UPDATE {variables} SET value = '{process(out)}' WHERE name = '{inner_name}'    name={name}")
         cur.execute(f"UPDATE {variables} SET value = '{process(out)}' WHERE name = '{inner_name}'")
         con.commit()
         return
     if len(out) == 0:
-        print(f"INSERT INTO {variables} (name, value) VALUES ('{inner_name}', '{process(value)}')    name={name}")
+        if(DEBUG): print(f"INSERT INTO {variables} (name, value) VALUES ('{inner_name}', '{process(value)}')    name={name}")
         cur.execute(f"INSERT INTO {variables} (name, value) VALUES ('{inner_name}', '{process(value)}')")
         con.commit()
     return
