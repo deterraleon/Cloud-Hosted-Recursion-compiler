@@ -12,6 +12,6 @@ Ok so there are a lot of things that i need to say here
     2) the parser i have rn is very bare bones, so with it come the next few limitations
     3) 2 functions with the same name aren't supported
     4) there can only be 1 function call per line
-    5) there are a bunch of variable names that will already be used by the compiler
+    5) there are a bunch of variable names that will already be used by the compiler, all of them are from the run file, except for os.getenv("RECURSION") variable, which denotes the recursion level 
     6) variable definitions can only be of a form {variable name} = {something}
     
