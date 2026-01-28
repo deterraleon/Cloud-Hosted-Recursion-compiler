@@ -22,3 +22,5 @@ if y == '+':
 elif y == '*':
     w = mult(x, z)
     print(w)
+elif y == '-':
+    print(add(-z, x))
