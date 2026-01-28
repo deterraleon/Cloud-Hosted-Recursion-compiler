@@ -1,7 +1,6 @@
-import sqlite3
 from dotenv import load_dotenv
 import os
-
+from sqlite_functions import get_con
 def process(func)->str:
     load_dotenv()
     sp = os.getenv("SP")
@@ -208,7 +207,7 @@ def parce_variable_usage(text:list[str], names):
 
 
 load_dotenv()
-con = sqlite3.connect(os.getenv("DB_NAME")) 
+con = get_con()
 cur = con.cursor()
 program = os.getenv("PROGRAM_NAME")
 variables = os.getenv("VARIABLES_NAME")
